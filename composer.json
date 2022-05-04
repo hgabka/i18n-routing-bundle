@@ -20,7 +20,7 @@
         "symfony/framework-bundle": "6.0.*"
     },
     "require-dev": {
-        "sensio/framework-extra-bundle": "6.0.*",
+        "sensio/framework-extra-bundle": "6.0.*"
     },
     "suggest": {
         "jms/translation-bundle": "If you want to use the RouteTranslation extractor"
