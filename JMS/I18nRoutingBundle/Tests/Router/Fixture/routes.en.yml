@@ -1,0 +1,8 @@
+contact: /contact
+welcome: /welcome-on-our-website
+non_i18n_route: /should-never-be-used
+homepage: /
+news_overview: /news
+english_only: /english-only
+sub_locale: /english
+

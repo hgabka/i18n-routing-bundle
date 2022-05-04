@@ -1,0 +1,32 @@
+{
+    "name":         "hgabka/i18n-routing-bundle",
+    "description":  "This bundle allows you to create i18n routes.",
+    "keywords":     ["translation","multilanguage","routing"],
+    "homepage": "http://jmsyst.com/bundles/JMSI18nRoutingBundle",       
+    "type":         "symfony-bundle",
+    "license":      "Apache2",
+    "authors": [
+        {
+            "name":   "Johannes M. Schmitt",
+            "email":  "schmittjoh@gmail.com"
+        },
+        {
+            "name": "Albert Casademont",
+            "email": "albertcasademont@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0.2",
+        "symfony/framework-bundle": "6.0.*"
+    },
+    "require-dev": {
+        "sensio/framework-extra-bundle": "6.0.*",
+    },
+    "suggest": {
+        "jms/translation-bundle": "If you want to use the RouteTranslation extractor"
+    },
+    "autoload": {
+        "psr-0": { "JMS\\I18nRoutingBundle": "" }
+    },
+    "target-dir": "JMS/I18nRoutingBundle"
+}
