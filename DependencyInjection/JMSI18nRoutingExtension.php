@@ -1,26 +1,11 @@
 <?php
 
-/*
- * Copyright 2012 Johannes M. Schmitt <schmittjoh@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 namespace JMS\I18nRoutingBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
@@ -32,9 +17,9 @@ class JMSI18nRoutingExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container)
     {
-        $config = $this->processConfiguration(new Configuration, $configs);
+        $config = $this->processConfiguration(new Configuration(), $configs);
 
-        $loader = new XmlFileLoader($container, new FileLocator(array(__DIR__.'/../Resources/config')));
+        $loader = new XmlFileLoader($container, new FileLocator([__DIR__ . '/../Resources/config']));
         $loader->load('services.xml');
 
         $container->setParameter('jms_i18n_routing.default_locale', $config['default_locale']);
@@ -48,7 +33,7 @@ class JMSI18nRoutingExtension extends Extension
             $container
                 ->getDefinition('jms_i18n_routing.locale_choosing_listener')
                 ->setPublic(true)
-                ->addTag('kernel.event_listener', array('event' => 'kernel.exception', 'priority' => 128))
+                ->addTag('kernel.event_listener', ['event' => 'kernel.exception', 'priority' => 128])
             ;
         }
 
@@ -56,7 +41,7 @@ class JMSI18nRoutingExtension extends Extension
             $container->setParameter('jms_i18n_routing.hostmap', $config['hosts']);
             $container
                 ->getDefinition('jms_i18n_routing.router')
-                ->addMethodCall('setHostMap', array('%jms_i18n_routing.hostmap%'))
+                ->addMethodCall('setHostMap', ['%jms_i18n_routing.hostmap%'])
             ;
 
             $container
@@ -73,7 +58,7 @@ class JMSI18nRoutingExtension extends Extension
                 ->addArgument($config['cookie']['secure'])
                 ->addArgument($config['cookie']['httponly'])
                 ->setPublic(true)
-                ->addTag('kernel.event_listener', array('event' => 'kernel.response', 'priority' => 256))
+                ->addTag('kernel.event_listener', ['event' => 'kernel.response', 'priority' => 256])
             ;
         }
 

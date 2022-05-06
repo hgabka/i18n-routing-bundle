@@ -3,8 +3,8 @@
 namespace JMS\I18nRoutingBundle\EventListener;
 
 use Symfony\Component\HttpFoundation\Cookie;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
  * Sets the user's language as a cookie.

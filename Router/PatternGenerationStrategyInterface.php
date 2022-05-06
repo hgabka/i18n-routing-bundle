@@ -2,8 +2,8 @@
 
 namespace JMS\I18nRoutingBundle\Router;
 
-use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Implementations are responsible for generating the i18n patterns
@@ -17,11 +17,11 @@ interface PatternGenerationStrategyInterface
      * Returns the i18n patterns for a given route.
      *
      * @param string $routeName
-     * @param Route $route
+     * @param Route  $route
      *
      * @return array<string, array<string>> an array mapping the pattern to an array of locales
      */
-    function generateI18nPatterns($routeName, Route $route);
+    public function generateI18nPatterns($routeName, Route $route);
 
     /**
      * You may add possible resources to the i18n collection.
@@ -30,5 +30,5 @@ interface PatternGenerationStrategyInterface
      *
      * @param RouteCollection $i18nRouteCollection
      */
-    function addResources(RouteCollection $i18nRouteCollection);
+    public function addResources(RouteCollection $i18nRouteCollection);
 }

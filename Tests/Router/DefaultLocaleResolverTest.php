@@ -2,17 +2,30 @@
 
 namespace JMS\I18nRoutingBundle\Tests\Router;
 
-use PHPUnit\Framework\TestCase;
-
 use JMS\I18nRoutingBundle\Router\DefaultLocaleResolver;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * @coversNothing
+ */
 class DefaultLocaleResolverTest extends TestCase
 {
     private $resolver;
 
+    protected function setUp(): void
+    {
+        $this->resolver = new DefaultLocaleResolver('hl', [
+            'foo' => 'en',
+            'bar' => 'de',
+        ]);
+    }
+
     /**
      * @dataProvider getResolutionTests
+     *
+     * @param mixed $expected
+     * @param mixed $message
      */
     public function testResolveLocale(Request $request, array $locales, $expected, $message)
     {
@@ -21,48 +34,40 @@ class DefaultLocaleResolverTest extends TestCase
 
     public function getResolutionTests()
     {
-        $tests = array();
+        $tests = [];
 
-        $tests[] = array(Request::create('http://foo/?hl=de'), array('foo'), 'en', 'Host has precedence before query parameter');
-        $tests[] = array(Request::create('/?hl=de'), array('foo'), 'de', 'Query parameter is selected');
-        $tests[] = array(Request::create('/?hl=de', 'GET', array(), array('hl' => 'en')), array('foo'), 'de', 'Query parameter has precedence before cookie');
+        $tests[] = [Request::create('http://foo/?hl=de'), ['foo'], 'en', 'Host has precedence before query parameter'];
+        $tests[] = [Request::create('/?hl=de'), ['foo'], 'de', 'Query parameter is selected'];
+        $tests[] = [Request::create('/?hl=de', 'GET', [], ['hl' => 'en']), ['foo'], 'de', 'Query parameter has precedence before cookie'];
 
         $session = $this->createMock('Symfony\Component\HttpFoundation\Session\SessionInterface');
         $session->expects($this->any())
             ->method('has')
             ->with('_locale')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
         $session->expects($this->any())
             ->method('get')
             ->with('_locale')
-            ->will($this->returnValue('fr'));
+            ->willReturn('fr');
         $session->expects($this->any())
             ->method('getName')
-            ->will($this->returnValue('SESS'));
+            ->willReturn('SESS');
 
-        $tests[] = array($request = Request::create('/?hl=de', 'GET', array(), array('SESS' => 'foo')), array('foo'), 'de', 'Query parameter has precedence before session');
+        $tests[] = [$request = Request::create('/?hl=de', 'GET', [], ['SESS' => 'foo']), ['foo'], 'de', 'Query parameter has precedence before session'];
         $request->setSession($session);
 
-        $tests[] = array($request = Request::create('/', 'GET', array(), array('SESS' => 'foo')), array('foo'), 'fr', 'Session is used');
+        $tests[] = [$request = Request::create('/', 'GET', [], ['SESS' => 'foo']), ['foo'], 'fr', 'Session is used'];
         $request->setSession($session);
 
-        $tests[] = array($request = Request::create('/', 'GET', array(), array('hl' => 'es', 'SESS' => 'foo')), array('foo'), 'fr', 'Session has precedence before cookie.');
+        $tests[] = [$request = Request::create('/', 'GET', [], ['hl' => 'es', 'SESS' => 'foo']), ['foo'], 'fr', 'Session has precedence before cookie.'];
         $request->setSession($session);
 
-        $tests[] = array(Request::create('/', 'GET', array(), array('hl' => 'es')), array('foo'), 'es', 'Cookie is used');
-        $tests[] = array(Request::create('/', 'GET', array(), array('hl' => 'es'), array(), array('HTTP_ACCEPT_LANGUAGE' => 'dk;q=0.5')), array('dk'), 'es', 'Cookie has precedence before Accept-Language header.');
-        $tests[] = array(Request::create('/', 'GET', array(), array(), array(), array('HTTP_ACCEPT_LANGUAGE' => 'dk;q=0.5')), array('es', 'dk'), 'dk', 'Accept-Language header is used.');
-        $tests[] = array(Request::create('/'), array('foo'), null, 'When Accept-Language header is used, and no locale matches, null is returned');
-        $tests[] = array(Request::create('/', 'GET', array(), array(), array(), array('HTTP_ACCEPT_LANGUAGE' => '')), array('foo'), null, 'Returns null if no method could be used');
+        $tests[] = [Request::create('/', 'GET', [], ['hl' => 'es']), ['foo'], 'es', 'Cookie is used'];
+        $tests[] = [Request::create('/', 'GET', [], ['hl' => 'es'], [], ['HTTP_ACCEPT_LANGUAGE' => 'dk;q=0.5']), ['dk'], 'es', 'Cookie has precedence before Accept-Language header.'];
+        $tests[] = [Request::create('/', 'GET', [], [], [], ['HTTP_ACCEPT_LANGUAGE' => 'dk;q=0.5']), ['es', 'dk'], 'dk', 'Accept-Language header is used.'];
+        $tests[] = [Request::create('/'), ['foo'], null, 'When Accept-Language header is used, and no locale matches, null is returned'];
+        $tests[] = [Request::create('/', 'GET', [], [], [], ['HTTP_ACCEPT_LANGUAGE' => '']), ['foo'], null, 'Returns null if no method could be used'];
 
         return $tests;
-    }
-
-    protected function setUp(): void
-    {
-        $this->resolver = new DefaultLocaleResolver('hl', array(
-            'foo' => 'en',
-            'bar' => 'de',
-        ));
     }
 }

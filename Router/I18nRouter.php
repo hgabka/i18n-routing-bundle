@@ -1,32 +1,14 @@
 <?php
 
-/*
- * Copyright 2012 Johannes M. Schmitt <schmittjoh@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 namespace JMS\I18nRoutingBundle\Router;
 
 use JMS\I18nRoutingBundle\Exception\NotAcceptableLanguageException;
-
-use Symfony\Component\Routing\Matcher\RequestMatcherInterface;
-use Symfony\Component\Routing\RequestContext;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
-use Symfony\Component\Routing\Exception\RouteNotFoundException;
-use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Exception\ResourceNotFoundException;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\Routing\Matcher\RequestMatcherInterface;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
@@ -36,10 +18,10 @@ use Symfony\Component\Routing\RouteCollection;
  */
 class I18nRouter extends Router
 {
-    private $hostMap = array();
+    protected $defaultLocale;
+    private $hostMap = [];
     private $i18nLoaderId;
     private $container;
-    protected $defaultLocale;
     private $redirectToHost = true;
     private $localeResolver;
 
@@ -55,7 +37,7 @@ class I18nRouter extends Router
      */
     public function __construct()
     {
-        call_user_func_array(array('Symfony\Bundle\FrameworkBundle\Routing\Router', '__construct'), func_get_args());
+        call_user_func_array(['Symfony\Bundle\FrameworkBundle\Routing\Router', '__construct'], func_get_args());
         $this->container = func_get_arg(0);
     }
 
@@ -68,11 +50,11 @@ class I18nRouter extends Router
      * Whether the user should be redirected to a different host if the
      * matching route is not belonging to the current domain.
      *
-     * @param Boolean $bool
+     * @param bool $bool
      */
     public function setRedirectToHost($bool)
     {
-        $this->redirectToHost = (Boolean) $bool;
+        $this->redirectToHost = (bool) $bool;
     }
 
     /**
@@ -104,7 +86,7 @@ class I18nRouter extends Router
         $currentLocale = $this->context->getParameter('_locale');
         if (isset($parameters['_locale'])) {
             $locale = $parameters['_locale'];
-        } else if ($currentLocale) {
+        } elseif ($currentLocale) {
             $locale = $currentLocale;
         } else {
             $locale = $this->defaultLocale;
@@ -126,7 +108,7 @@ class I18nRouter extends Router
         }
 
         try {
-            $url = $generator->generate($locale.I18nLoader::ROUTING_PREFIX.$name, $parameters, $referenceType);
+            $url = $generator->generate($locale . I18nLoader::ROUTING_PREFIX . $name, $parameters, $referenceType);
 
             if ($needsHost && $this->hostMap) {
                 $this->context->setHost($currentHost);
@@ -196,7 +178,8 @@ class I18nRouter extends Router
             if (!($currentLocale = $this->context->getParameter('_locale'))
                     && null !== $request) {
                 $currentLocale = $this->localeResolver->resolveLocale(
-                    $request, $params['_locales']
+                    $request,
+                    $params['_locales']
                 );
 
                 // If the locale resolver was not able to determine a locale, then all efforts to
@@ -215,7 +198,7 @@ class I18nRouter extends Router
                 if ($this->hostMap) {
                     // generate host maps
                     $hostMap = $this->hostMap;
-                    $availableHosts = array_map(function($locale) use ($hostMap) {
+                    $availableHosts = array_map(function ($locale) use ($hostMap) {
                         return $hostMap[$locale];
                     }, $params['_locales']);
 
@@ -223,13 +206,13 @@ class I18nRouter extends Router
                     foreach ($availableHosts as $host) {
                         if ($this->hostMap[$currentLocale] === $host) {
                             $differentHost = false;
+
                             break;
                         }
                     }
 
                     if ($differentHost) {
-                        throw new ResourceNotFoundException(sprintf('The route "%s" is not available on the current host "%s", but only on these hosts "%s".',
-                            $params['_route'], $this->hostMap[$currentLocale], implode(', ', $availableHosts)));
+                        throw new ResourceNotFoundException(sprintf('The route "%s" is not available on the current host "%s", but only on these hosts "%s".', $params['_route'], $this->hostMap[$currentLocale], implode(', ', $availableHosts)));
                     }
                 }
 
@@ -239,7 +222,7 @@ class I18nRouter extends Router
 
             unset($params['_locales']);
             $params['_locale'] = $currentLocale;
-        } else if (isset($params['_locale']) && 0 < $pos = strpos($params['_route'], I18nLoader::ROUTING_PREFIX)) {
+        } elseif (isset($params['_locale']) && 0 < $pos = strpos($params['_route'], I18nLoader::ROUTING_PREFIX)) {
             $params['_route'] = substr($params['_route'], $pos + strlen(I18nLoader::ROUTING_PREFIX));
         }
 
@@ -248,11 +231,10 @@ class I18nRouter extends Router
                 && isset($this->hostMap[$params['_locale']])
                 && $this->context->getHost() !== $host = $this->hostMap[$params['_locale']]) {
             if (!$this->redirectToHost) {
-                throw new ResourceNotFoundException(sprintf(
-                    'Resource corresponding to pattern "%s" not found for locale "%s".', $url, $this->getContext()->getParameter('_locale')));
+                throw new ResourceNotFoundException(sprintf('Resource corresponding to pattern "%s" not found for locale "%s".', $url, $this->getContext()->getParameter('_locale')));
             }
 
-            return array(
+            return [
                 '_controller' => 'JMS\I18nRoutingBundle\Controller\RedirectController::redirectAction',
                 'path'        => $url,
                 'host'        => $host,
@@ -261,7 +243,7 @@ class I18nRouter extends Router
                 'httpPort'    => $this->context->getHttpPort(),
                 'httpsPort'   => $this->context->getHttpsPort(),
                 '_route'      => $params['_route'],
-            );
+            ];
         }
 
         // if we have no locale set on the route, we try to set one according to the localeResolver
@@ -269,8 +251,9 @@ class I18nRouter extends Router
         if (!isset($params['_locale'])
                 && null !== $request
                 && $locale = $this->localeResolver->resolveLocale(
-                        $request,
-                        $this->container->getParameter('jms_i18n_routing.locales'))) {
+                    $request,
+                    $this->container->getParameter('jms_i18n_routing.locales')
+                )) {
             $params['_locale'] = $locale;
         }
 
@@ -278,7 +261,7 @@ class I18nRouter extends Router
     }
 
     /**
-     * @return Request|null
+     * @return null|Request
      */
     private function getRequest()
     {

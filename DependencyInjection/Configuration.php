@@ -1,26 +1,11 @@
 <?php
 
-/*
- * Copyright 2012 Johannes M. Schmitt <schmittjoh@gmail.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 namespace JMS\I18nRoutingBundle\DependencyInjection;
 
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 final class Configuration implements ConfigurationInterface
 {
@@ -33,7 +18,7 @@ final class Configuration implements ConfigurationInterface
             ->fixXmlConfig('host')
                 ->validate()
                     ->always()
-                    ->then(function($v) {
+                    ->then(function ($v) {
                         if ($v['hosts']) {
                             foreach ($v['locales'] as $locale) {
                                 if (!isset($v['hosts'][$locale])) {
@@ -57,7 +42,7 @@ final class Configuration implements ConfigurationInterface
                 ->end()
                 ->beforeNormalization()
                     ->always()
-                    ->then(function($v) {
+                    ->then(function ($v) {
                         if (isset($v['use_cookie'])) {
                             $v['cookie']['enabled'] = $v['use_cookie'];
                             unset($v['use_cookie']);
@@ -71,7 +56,7 @@ final class Configuration implements ConfigurationInterface
                     ->arrayNode('locales')
                         ->beforeNormalization()
                             ->ifString()
-                            ->then(function($v) { return preg_split('/\s*,\s*/', $v); })
+                            ->then(function ($v) { return preg_split('/\s*,\s*/', $v); })
                         ->end()
                         ->requiresAtLeastOneElement()
                         ->prototype('scalar')->end()
@@ -80,7 +65,7 @@ final class Configuration implements ConfigurationInterface
                     ->scalarNode('strategy')
                         ->defaultValue('custom')
                         ->validate()
-                            ->ifNotInArray(array('prefix', 'prefix_except_default', 'custom'))
+                            ->ifNotInArray(['prefix', 'prefix_except_default', 'custom'])
                             ->thenInvalid('Must be one of the following: prefix, prefix_except_default, or custom (default)')
                         ->end()
                     ->end()
@@ -89,7 +74,7 @@ final class Configuration implements ConfigurationInterface
                     ->arrayNode('hosts')
                         ->validate()
                             ->always()
-                            ->then(function($v) {
+                            ->then(function ($v) {
                                 if (count($v) !== count(array_flip($v))) {
                                     throw new \Exception('Every locale must map to a different host. You cannot have multiple locales map to the same host.');
                                 }

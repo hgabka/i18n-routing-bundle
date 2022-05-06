@@ -1,3 +1,3 @@
 <?php
 
-$container->loadFromExtension('framework', array('default_locale' => 'en'));
+$container->loadFromExtension('framework', ['default_locale' => 'en']);
