@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": ">=8.0.2",
-        "symfony/framework-bundle": "6.0.*"
+        "symfony/framework-bundle": "^6.0*"
     },
     "require-dev": {
         "sensio/framework-extra-bundle": "6.0.*"
