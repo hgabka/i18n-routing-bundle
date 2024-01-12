@@ -36,7 +36,7 @@ class CookieSettingListener
     public function onKernelResponse(ResponseEvent $event)
     {
         //Check if the current response contains an error. If it does, do not set the cookie as the Locale may not be properly set
-        if (HttpKernelInterface::MASTER_REQUEST !== $event->getRequestType() || !($event->getResponse()->isSuccessful() || $event->getResponse()->isRedirection())) {
+        if (HttpKernelInterface::MAIN_REQUEST !== $event->getRequestType() || !($event->getResponse()->isSuccessful() || $event->getResponse()->isRedirection())) {
             return;
         }
 
