@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;

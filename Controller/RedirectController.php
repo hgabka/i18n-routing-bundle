@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\Controller;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
