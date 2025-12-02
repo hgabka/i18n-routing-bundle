@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\Exception;
 
 class NotAcceptableLanguageException extends NotAcceptableException

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\Tests\Functional;
 
 require_once __DIR__ . '/../bootstrap.php';

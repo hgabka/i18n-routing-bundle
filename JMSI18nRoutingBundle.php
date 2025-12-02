@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle;
 
 use JMS\I18nRoutingBundle\DependencyInjection\Compiler\SetRouterPass;

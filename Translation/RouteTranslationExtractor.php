@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\Translation;
 
 use JMS\I18nRoutingBundle\Router\I18nRouter;

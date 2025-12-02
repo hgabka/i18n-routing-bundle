@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\EventListener;
 
 use JMS\I18nRoutingBundle\Router\LocaleResolverInterface;
