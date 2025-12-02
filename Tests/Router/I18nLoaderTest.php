@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\Tests\Router;
 
 use JMS\I18nRoutingBundle\Router\DefaultPatternGenerationStrategy;

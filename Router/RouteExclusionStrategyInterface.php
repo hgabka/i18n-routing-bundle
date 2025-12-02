@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\Router;
 
 use Symfony\Component\Routing\Route;

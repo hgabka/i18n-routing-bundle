@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\Exception;
 
 use Symfony\Component\HttpKernel\Exception\HttpException;

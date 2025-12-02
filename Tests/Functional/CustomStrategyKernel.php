@@ -1,6 +1,5 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\Tests\Functional;
 
 use Symfony\Component\Config\Loader\LoaderInterface;
