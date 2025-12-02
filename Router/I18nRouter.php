@@ -1,10 +1,10 @@
 <?php
 
-
 namespace JMS\I18nRoutingBundle\Router;
 
 use JMS\I18nRoutingBundle\Exception\NotAcceptableLanguageException;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
@@ -18,12 +18,11 @@ use Symfony\Component\Routing\RouteCollection;
  */
 class I18nRouter extends Router
 {
-    protected $defaultLocale;
-    private $hostMap = [];
-    private $i18nLoaderId;
-    private $container;
-    private $redirectToHost = true;
-    private $localeResolver;
+    private ?array $hostMap = [];
+    private ?string $i18nLoaderId = null;
+    private ?ContainerInterface $container = null;
+    private bool $redirectToHost = true;
+    private ?LocaleResolverInterface $localeResolver = null;
 
     /**
      * Constructor.
@@ -41,7 +40,7 @@ class I18nRouter extends Router
         $this->container = func_get_arg(0);
     }
 
-    public function setLocaleResolver(LocaleResolverInterface $resolver)
+    public function setLocaleResolver(LocaleResolverInterface $resolver): void
     {
         $this->localeResolver = $resolver;
     }
@@ -52,7 +51,7 @@ class I18nRouter extends Router
      *
      * @param bool $bool
      */
-    public function setRedirectToHost($bool)
+    public function setRedirectToHost($bool): void
     {
         $this->redirectToHost = (bool) $bool;
     }
@@ -62,17 +61,17 @@ class I18nRouter extends Router
      *
      * @param array $hostMap a map of locales to hosts
      */
-    public function setHostMap(array $hostMap)
+    public function setHostMap(array $hostMap): void
     {
         $this->hostMap = $hostMap;
     }
 
-    public function setI18nLoaderId($id)
+    public function setI18nLoaderId(?string $id): void
     {
         $this->i18nLoaderId = $id;
     }
 
-    public function setDefaultLocale($locale)
+    public function setDefaultLocale(?string $locale): void
     {
         $this->defaultLocale = $locale;
     }
@@ -263,7 +262,7 @@ class I18nRouter extends Router
     /**
      * @return null|Request
      */
-    private function getRequest()
+    private function getRequest(): ?Request
     {
         $request = null;
         if ($this->container->has('request_stack')) {

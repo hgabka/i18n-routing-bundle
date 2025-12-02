@@ -16,7 +16,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  */
 class JMSI18nRoutingBundle extends Bundle
 {
-    public function build(ContainerBuilder $container)
+    public function build(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new SetRouterPass());
     }
