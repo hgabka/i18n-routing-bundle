@@ -3,41 +3,42 @@
 namespace JMS\I18nRoutingBundle\Router;
 
 use JMS\I18nRoutingBundle\Exception\NotAcceptableLanguageException;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\CacheWarmer\WarmableInterface;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\Routing\Generator\UrlGenerator;
 use Symfony\Component\Routing\Matcher\RequestMatcherInterface;
+use Symfony\Component\Routing\Matcher\UrlMatcher;
+use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
+use Symfony\Component\Routing\RouterInterface;
 
 /**
  * I18n Router implementation.
  *
+ * Wraps the default Symfony router instead of extending it, since
+ * Symfony\Bundle\FrameworkBundle\Routing\Router is final as of Symfony 8.
+ *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class I18nRouter extends Router
+class I18nRouter implements RouterInterface, RequestMatcherInterface, WarmableInterface
 {
     private ?array $hostMap = [];
     private ?string $i18nLoaderId = null;
-    private ?ContainerInterface $container = null;
     private bool $redirectToHost = true;
     private ?LocaleResolverInterface $localeResolver = null;
+    private ?string $defaultLocale = null;
+    private RequestContext $context;
+    private ?UrlMatcher $matcher = null;
+    private ?UrlGenerator $generator = null;
 
-    /**
-     * Constructor.
-     *
-     * The only purpose of this is to make the container available in the sub-class
-     * since it is declared private in the parent class.
-     *
-     * The parameters are not listed explicitly here because they are different for
-     * Symfony 2.0 and 2.1. If we did list them, it would make this class incompatible
-     * with one of both versions.
-     */
-    public function __construct()
-    {
-        call_user_func_array(['Symfony\Bundle\FrameworkBundle\Routing\Router', '__construct'], func_get_args());
-        $this->container = func_get_arg(0);
+    public function __construct(
+        private readonly RouterInterface $innerRouter,
+        private readonly ContainerInterface $container,
+    ) {
+        $this->context = $innerRouter->getContext();
     }
 
     public function setLocaleResolver(LocaleResolverInterface $resolver): void
@@ -76,13 +77,45 @@ class I18nRouter extends Router
         $this->defaultLocale = $locale;
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    public function setContext(RequestContext $context): void
+    {
+        $this->context = $context;
+        $this->innerRouter->setContext($context);
+        // the context object changed, so the cached matcher/generator must be rebuilt against it
+        $this->matcher = null;
+        $this->generator = null;
+    }
+
+    public function getContext(): RequestContext
+    {
+        return $this->context;
+    }
+
+    private function getMatcher(): UrlMatcher
+    {
+        return $this->matcher ??= new UrlMatcher($this->getRouteCollection(), $this->context);
+    }
+
+    private function getGenerator(): UrlGenerator
+    {
+        return $this->generator ??= new UrlGenerator($this->getRouteCollection(), $this->context);
+    }
+
+    public function warmUp(string $cacheDir, ?string $buildDir = null): array
+    {
+        if ($this->innerRouter instanceof WarmableInterface) {
+            return $this->innerRouter->warmUp($cacheDir, $buildDir);
+        }
+
+        return [];
+    }
+
     public function generate(string $name, array $parameters = [], int $referenceType = self::ABSOLUTE_PATH): string
     {
+        $context = $this->getContext();
+
         // determine the most suitable locale to use for route generation
-        $currentLocale = $this->context->getParameter('_locale');
+        $currentLocale = $context->getParameter('_locale');
         if (isset($parameters['_locale'])) {
             $locale = $parameters['_locale'];
         } elseif ($currentLocale) {
@@ -98,67 +131,52 @@ class I18nRouter extends Router
         }
         $needsHost = self::NETWORK_PATH === $referenceType || self::ABSOLUTE_URL === $referenceType;
 
-        $generator = $this->getGenerator();
-
         // if an absolute or network URL is requested, we set the correct host
         if ($needsHost && $this->hostMap) {
-            $currentHost = $this->context->getHost();
-            $this->context->setHost($this->hostMap[$locale]);
+            $currentHost = $context->getHost();
+            $context->setHost($this->hostMap[$locale]);
         }
 
         try {
-            $url = $generator->generate($locale . I18nLoader::ROUTING_PREFIX . $name, $parameters, $referenceType);
+            $url = $this->getGenerator()->generate($locale . I18nLoader::ROUTING_PREFIX . $name, $parameters, $referenceType);
 
             if ($needsHost && $this->hostMap) {
-                $this->context->setHost($currentHost);
+                $context->setHost($currentHost);
             }
 
             return $url;
         } catch (RouteNotFoundException $ex) {
             if ($needsHost && $this->hostMap) {
-                $this->context->setHost($currentHost);
+                $context->setHost($currentHost);
             }
 
             // fallback to default behavior
         }
 
         // use the default behavior if no localized route exists
-        return $generator->generate($name, $parameters, $referenceType);
+        return $this->getGenerator()->generate($name, $parameters, $referenceType);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function match(string $url): array
+    public function match(string $pathinfo): array
     {
-        return $this->matchI18n(parent::match($url), $url);
+        return $this->matchI18n($this->getMatcher()->match($pathinfo), $pathinfo);
     }
 
     public function getRouteCollection(): RouteCollection
     {
-        $collection = parent::getRouteCollection();
+        $collection = $this->innerRouter->getRouteCollection();
 
         return $this->container->get($this->i18nLoaderId)->load($collection);
     }
 
-    public function getOriginalRouteCollection()
+    public function getOriginalRouteCollection(): RouteCollection
     {
-        return parent::getRouteCollection();
+        return $this->innerRouter->getRouteCollection();
     }
 
-    /**
-     * To make compatible with Symfony <2.4
-     */
     public function matchRequest(Request $request): array
     {
-        $matcher = $this->getMatcher();
-        $pathInfo = $request->getPathInfo();
-        if (!$matcher instanceof RequestMatcherInterface) {
-            // fallback to the default UrlMatcherInterface
-            return $this->matchI18n($matcher->match($pathInfo), $pathInfo);
-        }
-
-        return $this->matchI18n($matcher->matchRequest($request), $pathInfo);
+        return $this->matchI18n($this->getMatcher()->matchRequest($request), $request->getPathInfo());
     }
 
     private function matchI18n(array $params, $url)
@@ -174,7 +192,7 @@ class I18nRouter extends Router
                 $params['_route'] = substr($params['_route'], $pos + strlen(I18nLoader::ROUTING_PREFIX));
             }
 
-            if (!($currentLocale = $this->context->getParameter('_locale'))
+            if (!($currentLocale = $this->getContext()->getParameter('_locale'))
                     && null !== $request) {
                 $currentLocale = $this->localeResolver->resolveLocale(
                     $request,
@@ -228,7 +246,7 @@ class I18nRouter extends Router
         // check if the matched route belongs to a different locale on another host
         if (isset($params['_locale'])
                 && isset($this->hostMap[$params['_locale']])
-                && $this->context->getHost() !== $host = $this->hostMap[$params['_locale']]) {
+                && $this->getContext()->getHost() !== $host = $this->hostMap[$params['_locale']]) {
             if (!$this->redirectToHost) {
                 throw new ResourceNotFoundException(sprintf('Resource corresponding to pattern "%s" not found for locale "%s".', $url, $this->getContext()->getParameter('_locale')));
             }
@@ -238,9 +256,9 @@ class I18nRouter extends Router
                 'path'        => $url,
                 'host'        => $host,
                 'permanent'   => true,
-                'scheme'      => $this->context->getScheme(),
-                'httpPort'    => $this->context->getHttpPort(),
-                'httpsPort'   => $this->context->getHttpsPort(),
+                'scheme'      => $this->getContext()->getScheme(),
+                'httpPort'    => $this->getContext()->getHttpPort(),
+                'httpsPort'   => $this->getContext()->getHttpsPort(),
                 '_route'      => $params['_route'],
             ];
         }
@@ -267,8 +285,6 @@ class I18nRouter extends Router
         $request = null;
         if ($this->container->has('request_stack')) {
             $request = $this->container->get('request_stack')->getCurrentRequest();
-        } elseif (method_exists($this->container, 'isScopeActive') && $this->container->isScopeActive('request')) {
-            $request = $this->container->get('request');
         }
 
         return $request;

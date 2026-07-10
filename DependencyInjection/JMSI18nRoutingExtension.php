@@ -5,7 +5,7 @@ namespace JMS\I18nRoutingBundle\DependencyInjection;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 /**
  * DI Extension.
@@ -18,8 +18,8 @@ class JMSI18nRoutingExtension extends Extension
     {
         $config = $this->processConfiguration(new Configuration(), $configs);
 
-        $loader = new XmlFileLoader($container, new FileLocator([__DIR__ . '/../Resources/config']));
-        $loader->load('services.xml');
+        $loader = new YamlFileLoader($container, new FileLocator([__DIR__ . '/../Resources/config']));
+        $loader->load('services.yaml');
 
         $container->setParameter('jms_i18n_routing.default_locale', $config['default_locale']);
         $container->setParameter('jms_i18n_routing.locales', $config['locales']);

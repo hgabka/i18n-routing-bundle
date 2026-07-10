@@ -1,0 +1,80 @@
+parameters:
+    jms_i18n_routing.router.class: JMS\I18nRoutingBundle\Router\I18nRouter
+    jms_i18n_routing.locale_resolver.class: JMS\I18nRoutingBundle\Router\DefaultLocaleResolver
+
+    jms_i18n_routing.loader.class: JMS\I18nRoutingBundle\Router\I18nLoader
+    jms_i18n_routing.route_exclusion_strategy.class: JMS\I18nRoutingBundle\Router\DefaultRouteExclusionStrategy
+    jms_i18n_routing.pattern_generation_strategy.class: JMS\I18nRoutingBundle\Router\DefaultPatternGenerationStrategy
+
+    jms_i18n_routing.locale_choosing_listener.class: JMS\I18nRoutingBundle\EventListener\LocaleChoosingListener
+    jms_i18n_routing.cookie_setting_listener.class: JMS\I18nRoutingBundle\EventListener\CookieSettingListener
+
+    jms_i18n_routing.route_translation_extractor.class: JMS\I18nRoutingBundle\Translation\RouteTranslationExtractor
+
+services:
+    jms_i18n_routing.locale_resolver.default:
+        class: '%jms_i18n_routing.locale_resolver.class%'
+        public: false
+        arguments:
+            - '%jms_i18n_routing.cookie.name%'
+
+    jms_i18n_routing.locale_resolver:
+        alias: jms_i18n_routing.locale_resolver.default
+        public: false
+
+    jms_i18n_routing.router:
+        class: '%jms_i18n_routing.router.class%'
+        arguments: ['@router.default', '@service_container']
+        public: false
+        calls:
+            - [setLocaleResolver, ['@jms_i18n_routing.locale_resolver']]
+            - [setI18nLoaderId, ['jms_i18n_routing.loader']]
+            - [setDefaultLocale, ['%jms_i18n_routing.default_locale%']]
+            - [setRedirectToHost, ['%jms_i18n_routing.redirect_to_host%']]
+
+    jms_i18n_routing.locale_choosing_listener:
+        class: '%jms_i18n_routing.locale_choosing_listener.class%'
+        public: false
+        arguments:
+            - '%jms_i18n_routing.default_locale%'
+            - '%jms_i18n_routing.locales%'
+            - '@jms_i18n_routing.locale_resolver'
+
+    jms_i18n_routing.cookie_setting_listener:
+        class: '%jms_i18n_routing.cookie_setting_listener.class%'
+        public: false
+
+    jms_i18n_routing.route_exclusion_strategy:
+        class: '%jms_i18n_routing.route_exclusion_strategy.class%'
+        public: false
+
+    jms_i18n_routing.pattern_generation_strategy.default:
+        class: '%jms_i18n_routing.pattern_generation_strategy.class%'
+        public: false
+        arguments:
+            - '%jms_i18n_routing.strategy%'
+            - '@translator'
+            - '%jms_i18n_routing.locales%'
+            - '%kernel.cache_dir%'
+            - '%jms_i18n_routing.catalogue%'
+            - '%jms_i18n_routing.default_locale%'
+
+    jms_i18n_routing.pattern_generation_strategy:
+        alias: jms_i18n_routing.pattern_generation_strategy.default
+        public: false
+
+    jms_i18n_routing.loader:
+        class: '%jms_i18n_routing.loader.class%'
+        public: true
+        arguments:
+            - '@jms_i18n_routing.route_exclusion_strategy'
+            - '@jms_i18n_routing.pattern_generation_strategy'
+
+    jms_i18n_routing.route_translation_extractor:
+        class: '%jms_i18n_routing.route_translation_extractor.class%'
+        public: false
+        arguments:
+            - '@router'
+            - '@jms_i18n_routing.route_exclusion_strategy'
+        tags:
+            - { name: jms_translation.extractor, alias: jms_i18n_routing }
