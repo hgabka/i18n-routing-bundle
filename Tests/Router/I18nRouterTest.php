@@ -268,7 +268,6 @@ class I18nRouterTest extends TestCase
         $context->setParameter('_locale', null);
 
         $ref = new \ReflectionProperty($router, 'container');
-        $ref->setAccessible(true);
         $container = $ref->getValue($router);
         $request = Request::create('/');
 
