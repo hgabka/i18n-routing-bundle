@@ -1,5 +1,0 @@
-imports:
-    - { resource: framework.yml }
-    - { resource: default_locale.php }
-    - { resource: twig.yml }
-

@@ -1,13 +1,17 @@
 {
-    "name":         "hgabka/i18n-routing-bundle",
-    "description":  "This bundle allows you to create i18n routes.",
-    "keywords":     ["translation","multilanguage","routing"],      
-    "type":         "symfony-bundle",
-    "license":      "Apache2",
+    "name": "hgabka/i18n-routing-bundle",
+    "description": "This bundle allows you to create i18n routes.",
+    "keywords": [
+        "translation",
+        "multilanguage",
+        "routing"
+    ],
+    "type": "symfony-bundle",
+    "license": "Apache2",
     "authors": [
         {
-            "name":   "Gabe",
-            "email":  "hgabka@gmail.com"
+            "name": "Gabe",
+            "email": "hgabka@gmail.com"
         }
     ],
     "require": {
@@ -18,12 +22,26 @@
         "jms/translation-bundle": "If you want to use the RouteTranslation extractor"
     },
     "autoload": {
-        "psr-0": { "JMS\\I18nRoutingBundle": "" }
+        "psr-0": {
+            "JMS\\I18nRoutingBundle": ""
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JMS\\I18nRoutingBundle\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
     },
     "target-dir": "JMS/I18nRoutingBundle",
     "extra": {
         "branch-alias": {
             "dev-v8": "8.0.x-dev"
         }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5|^11.0|^12.0|^13.0",
+        "symfony/translation": "^7.0|^8.0"
     }
 }
