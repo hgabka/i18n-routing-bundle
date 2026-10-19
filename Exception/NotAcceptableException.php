@@ -6,7 +6,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class NotAcceptableException extends HttpException implements Exception
 {
-    public function __construct($message = '', $code = 0, \Exception $previous = null)
+    public function __construct($message = '', $code = 0, ?\Throwable $previous = null)
     {
         parent::__construct(406, $message, $previous, [], $code);
     }
